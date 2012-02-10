@@ -1,0 +1,80 @@
+sfDoctrineActAsSerializablePlugin
+=============================
+
+The `sfDoctrineActAsSerializablePlugin` plugin automates the handling of
+serializable columns. Each time a __Serializable__ object is read from
+the database, the appropriate columns are unserialized, each time it is
+saved - the column values are seralized back.
+
+Instalation
+===========
+
+Install the plugin via the subversion repository by executing the following
+command from the project root directory:
+
+    $ svn co http://svn.symfony-project.com/plugins/sfDoctrineActAsSerializablePlugin/trunk plugins/sfDoctrineActAsSerializablePlugin
+
+or by using the default symfony plugin install command:
+
+    $ ./symfony plugin:install sfDoctrineActAsSerializablePlugin
+
+
+Usage
+=====
+
+You don't have to worry about (un)serializing data when reading the data from
+and saving it to the database. Everything will be done automatically from now
+on. It's extremely useful when you want to keep array values in the database.
+
+    # Using global behavior will make no changes.
+
+    Xxx:
+      actAs:
+        Serializable:
+          fields: [ features, attributes ]
+          column_suffix: _srlzd
+
+Set the fields that are going to be serializable. Doctrine will create new
+columns with their names concatenated with the `column_suffix`. In the above
+example, the `Xxx` model woud have `features_srlzd` and `attributes_srlzd`
+columns.
+
+no postConstruct
+----------------
+
+The problem with Doctrine is that there can be no postConstuct hook called after
+a new record is created. [The topic](http://groups.google.com/group/doctrine-user/browse_thread/thread/9e045b4e7bffec23?pli=1)
+was started in 2009 and there has been no solution for the 1.x Doctrine branch
+yet. Hence, the hook had to be done in a different way, unfortunately. Each
+model that uses the Serializable behavior should have the construct method
+implemented with one extra line, just as below:
+
+  [php]
+  class Xxx extends BaseXxx
+  {
+    public function construct()
+    {
+      parent::construct();
+      Doctrine_Auxiliary_Tools::postConstruct($this);
+    }
+  }
+
+The postConstruct method creates empty values for the serializable columns.
+
+todo
+----
+
+ * fixtures
+
+Thanks to
+---------
+
+Miko Väli, who was looking for the same Doctrine feature as I was and whose
+question in the google groups made it clear that I have to overcome the problem
+myself.
+
+Comments, bug reports, suggestions
+----------------------------------
+
+If you want to comment on the plugin or suggest your ideas, please feel free to
+mail me.
